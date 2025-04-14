@@ -461,7 +461,29 @@ Rather than building our own implementation of QBBN from scratch or creating a R
   - [ ] Create graph-specific performance tuning guidelines
   - [ ] Identify optimal configurations for different network types
 
-## Milestone 6: Graph-Based Explanation System
+## Milestone 6: Visualization and Explorer Integration ✅
+
+### Explorer Integration
+- [x] Integrate visualization from bayes-star reference implementation:
+  - [x] Study explorer component in reference implementation
+  - [x] Copy and adapt explorer code to our project structure
+  - [x] Fix imports and dependencies for our codebase
+  - [x] Update routes to work with our BeliefNetwork implementation
+  - [x] Create a launcher script for the explorer web interface
+  - [x] Test visualization with example scenarios
+
+### Database Persistence Configuration
+- [ ] Make database persistence configurable:
+  - [ ] Create configuration module for storage options
+  - [ ] Implement interface to select between in-memory and persistent storage
+  - [ ] Add command line options for database selection
+  - [ ] Update GraphDBAdapter to respect configuration settings
+  - [ ] Create connection pools for both in-memory and persistent databases
+  - [ ] Add database location configuration options
+  - [ ] Implement automatic migration between storage types
+  - [ ] Update documentation with storage configuration options
+
+## Milestone 7: Graph-Based Explanation System
 
 ### Graph Representation for Explanations
 - [ ] Design graph-based explanation framework:
@@ -519,9 +541,8 @@ Rather than building our own implementation of QBBN from scratch or creating a R
   - [ ] Implement tests with known inconsistent graph patterns
 
 ## Future Milestones
-- Milestone 7: Scheme Programming Interface
-- Milestone 8: Indexing and Search
-- Milestone 9: Ontology and Multi-level Abstraction
-- Milestone 10: LLM Integration
-- Milestone 11: Web Interface and Visualization
+- Milestone 8: Scheme Programming Interface
+- Milestone 9: Indexing and Search
+- Milestone 10: Ontology and Multi-level Abstraction
+- Milestone 11: LLM Integration
 - Milestone 12: Performance Optimization and Integration

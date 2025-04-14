@@ -3,6 +3,7 @@ pub mod inference;
 pub mod model;
 pub mod graphdb;  // This will be our new module replacing Redis
 pub mod scenarios; // Expose the scenarios module for testing
+pub mod explorer;  // Visualization and exploration tools
 
 // Re-export color printing macros
 pub use crate::print_blue;

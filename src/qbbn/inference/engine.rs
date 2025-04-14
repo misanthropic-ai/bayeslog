@@ -31,8 +31,8 @@ pub struct Inferencer {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MarginalTable {
-    entries: Vec<(String, f64)>,
-    mapping: HashMap<String, f64>,
+    pub entries: Vec<(String, f64)>,
+    pub mapping: HashMap<String, f64>,
 }
 
 impl MarginalTable {

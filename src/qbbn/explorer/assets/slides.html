@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation</title>
+    <style>
+        /* css here */
+    </style>
+</head>
+
+<body>
+    <div id="index-display">Card 1 of 10</div>
+    <div class="card-container">
+        {body_html}
+
+        <button id="left-arrow" class="arrow">←</button>
+        <button id="right-arrow" class="arrow">→</button>
+    </div>
+
+    <script>
+        let currentCardIndex = 0;
+        const totalCards = 10;
+        const cards = document.querySelectorAll('.animation-card');
+        const indexDisplay = document.getElementById('index-display');
+
+        // Function to show the current card and update the index display
+        function showCurrentCard() {
+            cards.forEach((card, index) => {
+                card.style.display = index === currentCardIndex ? 'flex' : 'none';
+            });
+            indexDisplay.textContent = `Card ${currentCardIndex + 1} of ${totalCards}`;
+        }
+
+        // Event listener for the left arrow
+        document.getElementById('left-arrow').addEventListener('click', () => {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                showCurrentCard();
+            }
+        });
+
+        // Event listener for the right arrow
+        document.getElementById('right-arrow').addEventListener('click', () => {
+            if (currentCardIndex < totalCards - 1) {
+                currentCardIndex++;
+                showCurrentCard();
+            }
+        });
+
+        // Show the first card on initial load
+        showCurrentCard();
+    </script>
+</body>
+
+</html>

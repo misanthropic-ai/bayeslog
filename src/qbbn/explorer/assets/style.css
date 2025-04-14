@@ -1,0 +1,164 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+header {
+    background-color: black;
+    width: 100%;
+    padding: 20px 0;
+    text-align: center;
+}
+
+#product-name {
+    color: white;
+    font-size: 48px; /* You can adjust the size as needed */
+    margin: 0;
+}
+
+#sub-title {
+    color: yellow;
+    font-size: 24px; /* You can adjust the size as needed */
+}
+
+main {
+    background-color: white;
+    padding: 20px;
+    height: calc(100% - 60px); /* Adjust the height based on the header padding */
+}
+
+
+.section_header {
+    background-color: red;
+    width: 100%;
+    padding: 20px 10px;
+    text-align: left;
+    color: white;
+    font-size: 24px;
+}
+
+.experiment_name {
+    font-size: 54px;
+}
+
+.row_element {
+    font-size: 24px;
+}
+
+.domain_icon {
+    width: 200px;
+}
+
+.domain_label {
+    font-size: 48px;
+}
+
+.relation_name {
+    font-size: 54px;
+    background-color: blue;
+    color: white;
+}
+
+.role_name {
+    font-size: 48px;
+    background-color: yellow;
+    color: black;
+}
+
+.and_separator {
+    background-color: black;
+    color: white;
+    font-size: 80px;
+}
+
+.implication_box {
+    border: 10px solid black;
+    display: flex;
+    flex-direction: row;
+}
+
+.implication_divider {
+    background-color: red;
+    font-size: 80px;
+    color: white;
+}
+
+
+.network_cell {
+    background-color: green;
+    text-align: center;
+}
+
+.network_column {
+    background-color: orange;
+}
+
+.network_row {
+    background-color: plum;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    border: 5px solid red;
+}
+
+.proof_box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.weight_box {
+    background-color: yellow;
+}
+
+.weight_box_row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    border: 5px solid paleturquoise;
+}
+
+.weight_box_cell {
+    margin: 20px;
+    padding: 20px;
+}
+
+.positive_weight {
+    background-color: darkgreen;
+    color: white;
+}
+
+.negative_weight {
+    background-color: darkred;
+    color: white;
+}
+
+.neutral_weight {
+    background-color: black;
+    color: white;
+}
+
+.factor_box {
+    background-color: teal;
+    color: white;
+    font-weight: bold;
+    border: 10px orange dotted;
+}
+
+.factor_parent_box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    border: 5px solid paleturquoise;
+}
+
+.marginal {
+    background-color: orangered;
+    color: white;
+    font-size: 32px;
+}
