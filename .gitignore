@@ -19,3 +19,8 @@
 
 # Project specific
 /reference
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3

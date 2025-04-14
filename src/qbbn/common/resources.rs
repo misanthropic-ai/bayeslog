@@ -12,8 +12,19 @@ pub struct ResourceContext {
 impl ResourceContext {
     /// Creates a new ResourceContext with a GraphDB-backed connection
     pub fn new(options: &CommandLineOptions) -> Result<ResourceContext, Box<dyn Error>> {
-        // Create a RedisManager (our GraphDBAdapter)
-        let manager = RedisManager::new_default()?;
+        // Create a RedisManager (our GraphDBAdapter) based on storage type
+        let manager = match options.storage_type {
+            super::setup::StorageType::InMemory => {
+                RedisManager::new_in_memory(&options.scenario_name)?
+            },
+            super::setup::StorageType::Persistent => {
+                // Get the database path or use a default based on scenario name
+                let db_path = options.db_path.clone().unwrap_or_else(|| {
+                    format!("{}.db", options.scenario_name)
+                });
+                RedisManager::new_with_file(&db_path, &options.scenario_name)?
+            }
+        };
         
         // Get a MockConnection wrapped in Arc<Mutex>
         let connection = manager.get_arc_mutex_guarded_connection()?;
@@ -37,6 +48,8 @@ impl ResourceContext {
             print_training_loss: false,
             test_example: None,
             marginal_output_file: None,
+            storage_type: super::setup::StorageType::InMemory,
+            db_path: None,
         };
         
         Ok(ResourceContext {
@@ -58,6 +71,8 @@ impl ResourceContext {
             print_training_loss: false,
             test_example: None,
             marginal_output_file: None,
+            storage_type: super::setup::StorageType::Persistent,
+            db_path: Some(path.to_string()),
         };
         
         Ok(ResourceContext {

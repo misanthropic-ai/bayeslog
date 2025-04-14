@@ -1,7 +1,19 @@
-use clap::{Command, Arg};
+use clap::{Command, Arg, builder::EnumValueParser, ValueEnum};
 use env_logger::{Builder, Env};
 use serde::Deserialize;
 use std::{io::Write, path::Path};
+
+/// Type of storage to use for the database
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, ValueEnum)]
+pub enum StorageType {
+    /// In-memory database (not persistent)
+    #[serde(rename = "in-memory")]
+    InMemory,
+    
+    /// SQLite database stored in a file (persistent)
+    #[serde(rename = "persistent")]
+    Persistent,
+}
 
 /// These options define the inputs from the user.
 /// Nothing is owned by basic data types so this class can be easily freely around.
@@ -13,6 +25,8 @@ pub struct CommandLineOptions {
     pub print_training_loss: bool,
     pub test_example: Option<u32>,
     pub marginal_output_file: Option<String>,
+    pub storage_type: StorageType,
+    pub db_path: Option<String>,
 }
 
 #[allow(dead_code)]
@@ -79,6 +93,19 @@ pub fn parse_configuration_options() -> CommandLineOptions {
                 .value_name("FILE")
                 .help("Sets the file name for marginal output (optional)"),
         )
+        .arg(
+            Arg::new("storage_type")
+                .long("storage_type")
+                .value_parser(EnumValueParser::<StorageType>::new())
+                .help("Type of database storage to use: 'in-memory' or 'persistent'")
+                .default_value("in-memory"),
+        )
+        .arg(
+            Arg::new("db_path")
+                .long("db_path")
+                .value_name("PATH")
+                .help("Path to SQLite database file (only used with persistent storage)"),
+        )
         .get_matches();
     let entities_per_domain: i32 = matches
         .get_one::<String>("entities_per_domain")
@@ -96,6 +123,15 @@ pub fn parse_configuration_options() -> CommandLineOptions {
         .expect("scenario_name is required") // As it's required, unwrap directly
         .to_string();
     let test_scenario = matches.get_one::<String>("test_scenario").map(|s| s.to_string());
+    
+    // Get storage_type with default value of InMemory
+    let storage_type = matches
+        .get_one::<StorageType>("storage_type")
+        .copied()
+        .unwrap_or(StorageType::InMemory);
+        
+    // Get the database path if provided (only relevant for persistent storage)
+    let db_path = matches.get_one::<String>("db_path").map(|s| s.to_string());
 
     CommandLineOptions {
         scenario_name,
@@ -104,5 +140,7 @@ pub fn parse_configuration_options() -> CommandLineOptions {
         print_training_loss,
         test_example,
         marginal_output_file,
+        storage_type,
+        db_path,
     }
 }

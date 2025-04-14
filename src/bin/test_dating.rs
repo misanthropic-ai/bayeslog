@@ -1,4 +1,4 @@
-use bayeslog::qbbn::common::setup::CommandLineOptions;
+use bayeslog::qbbn::common::setup::{CommandLineOptions, StorageType};
 use bayeslog::qbbn::common::resources::ResourceContext;
 use bayeslog::qbbn::common::proposition_db::RedisBeliefTable;
 use bayeslog::qbbn::common::model::InferenceModel;
@@ -10,6 +10,7 @@ use bayeslog::qbbn::model::objects::Domain;
 use bayeslog::qbbn::scenarios::factory::ScenarioMakerFactory;
 use bayeslog::qbbn::common::train::setup_and_train;
 use std::borrow::Borrow;
+use std::env;
 use std::error::Error;
 use std::sync::Arc;
 use bayeslog::qbbn::model::exponential::ExponentialModel;
@@ -23,9 +24,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     let print_training_loss = true;
     let scenario_name = "dating_simple".to_string();
     
+    // Get storage type from environment variable or default to in-memory
+    let storage_type_str = env::var("STORAGE_TYPE").unwrap_or_else(|_| "in-memory".to_string());
+    let storage_type = match storage_type_str.as_str() {
+        "persistent" => StorageType::Persistent,
+        _ => StorageType::InMemory,
+    };
+    
+    // Get database path from environment variable
+    let db_path = env::var("DB_PATH").ok();
+    
     println!("===== CONFIGURATION =====");
     println!("Scenario: {}", scenario_name);
     println!("Entities per domain: {}", entities_per_domain);
+    println!("Storage Type: {:?}", storage_type);
+    if let Some(path) = &db_path {
+        println!("Database Path: {}", path);
+    }
     println!("=========================");
     
     let config = CommandLineOptions {
@@ -35,6 +50,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         print_training_loss,
         test_example: None,
         marginal_output_file: None,
+        storage_type,
+        db_path,
     };
     println!("Scenario: {}", config.scenario_name);
     
