@@ -8,7 +8,7 @@ BayesLog aims to modernize symbolic AI with probabilistic reasoning, inspired by
 
 ## Current Status
 
-This project is currently in development. The core graph database functionality has been implemented and integrated with a QBBN (Quantified Boolean Bayesian Network) implementation. You can now run training and inference on belief networks using the graph database backend.
+This project is currently in development. The core graph database functionality has been implemented and integrated with a QBBN (Quantified Boolean Bayesian Network) implementation. Heavily under development, don't use it yet!
 
 ## Getting Started
 
@@ -54,7 +54,7 @@ The graph database component provides a flexible way to store and query nodes (e
 - Connection pooling with r2d2 for efficient concurrent access
 - Transaction support for atomic operations
 
-#### Usage Example
+#### GraphDB Usage Example
 
 ```rust
 use bayeslog::graph::database::GraphDatabase;
@@ -161,3 +161,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Inspired by ProbLog and OpenCyc
 - Thanks to the Rust community for excellent libraries
+- HUGE credit to Greg Coppola for the original BayesStar implementation that demonstrated such an excellent design for a Bayesian belief net to start playing with: 
+    - [BayesStar Github](https://github.com/gregorycoppola/bayes-star)
+    - [The Quantified Boolean Bayesian Network: Theory and Experiments with a Logical Graphical Model](https://arxiv.org/abs/2402.06557)
+- Also big credit to elinorbgr for the loopybayesnet implementation for an awesome example of what the hell was going on in a network like this 
+    - [Loopy Bayesnet Github](https://github.com/elinorbgr/loopybayesnet)
+    - And the paper it was based off [Loopy Belief Propagation for Approximate Inference: An Empirical Study](https://arxiv.org/abs/1301.6725)
