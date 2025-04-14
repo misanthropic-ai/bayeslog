@@ -42,7 +42,8 @@ impl ScenarioMaker for SimpleDating {
         let mut graph = InferenceGraph::new_mutable(namespace.clone())?;
         let proposition_db = RedisBeliefTable::new_mutable(namespace.clone())?;
         let mut plan = TrainingPlan::new(namespace.clone())?;
-        let total_members_each_class = 1024;
+        // Use the configured number of entities per domain from the resource context
+        let total_members_each_class = resources.config.entities_per_domain as usize;
         let entity_domains = [Domain::MAN.to_string(), Domain::WOMAN.to_string()];
 
         // Retrieve entities in the Man domain
