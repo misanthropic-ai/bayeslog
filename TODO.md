@@ -483,7 +483,30 @@ Rather than building our own implementation of QBBN from scratch or creating a R
   - [ ] Implement automatic migration between storage types
   - [ ] Update documentation with storage configuration options
 
-## Milestone 7: Graph-Based Explanation System
+## Milestone 7: Proper Graph-Based Representation
+
+### Redesign Storage Model for True Graph Representation
+- [ ] Refactor GraphDBAdapter to use proper graph structures:
+  - [ ] Create dedicated "Proposition" nodes for each proposition
+  - [ ] Store evidence as relationships to "Evidence" nodes
+  - [ ] Properly model entity relationships as edges in the graph
+  - [ ] Connect related propositions with meaningful edge types
+  - [ ] Replace hash-based storage with true graph relationships
+  - [ ] Update querying mechanisms to traverse the graph properly
+  - [ ] Optimize graph traversal for efficient inference
+  - [ ] Add proper indexing for common query patterns
+  - [ ] Migrate existing storage scheme to the new graph model
+  - [ ] Update visualization to display the graph structure properly
+
+### Leverage Graph Database Capabilities
+- [ ] Implement graph-specific optimizations:
+  - [ ] Use graph traversal algorithms for belief propagation
+  - [ ] Leverage graph patterns for more efficient querying
+  - [ ] Implement graph-based caching for frequently accessed paths
+  - [ ] Use native graph database features for complex queries
+  - [ ] Optimize for performance using graph-specific techniques
+
+## Milestone 8: Graph-Based Explanation System
 
 ### Graph Representation for Explanations
 - [ ] Design graph-based explanation framework:
