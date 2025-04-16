@@ -350,7 +350,27 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Comprehensive explanation system with dual-approach methodology.
 - **Tests**: Explanation accuracy and counterfactual validation.
 
-### Milestone 7: Scheme Programming Interface
+### Milestone 7: Proper Graph-Based Representation ✅
+- **Tasks**:
+  - Refactor GraphDBAdapter to use proper graph structures: ✅
+    - Create dedicated "Proposition" nodes for each proposition
+    - Store evidence as properties on Proposition nodes
+    - Model entity relationships as edges in the graph
+    - Create explicit "Factor" nodes connected to premise/conclusion Propositions
+    - Replace hash-based storage with true graph relationships
+    - Update querying mechanisms to traverse the graph properly
+    - Add QBBN-specific operations that leverage graph semantics
+    - Create more efficient traversal patterns for common operations
+    - Fix compiler warnings and improve code quality
+  - Implement graph-specific optimizations: ✅
+    - Use graph traversal algorithms for belief propagation
+    - Leverage graph patterns for more efficient querying
+    - Use native graph database features for complex queries
+    - Ensure backward compatibility with existing code
+- **Deliverables**: True graph-native representation of belief network components.
+- **Tests**: Comprehensive tests for graph-based storage and retrieval.
+
+### Milestone 8: Scheme Programming Interface
 - **Tasks**:
   - Integrate Steel Scheme interpreter.
   - Implement custom primitives for belief operations.
@@ -361,7 +381,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Extensible Scheme programming environment.
 - **Tests**: Scheme script execution and primitive functionality.
 
-### Milestone 8: Advanced Search and Temporal Reasoning
+### Milestone 9: Advanced Search and Temporal Reasoning
 - **Tasks**:
   - Integrate `sqlite-vss` for vector indexing and similarity search.
   - Implement hybrid search combining logical and vector search.
@@ -372,7 +392,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Comprehensive search system with temporal capabilities.
 - **Tests**: Search accuracy, recall, and performance benchmarks.
 
-### Milestone 9: Ontology and Multi-level Abstraction
+### Milestone 10: Ontology and Multi-level Abstraction
 - **Tasks**:
   - Implement enhanced ontology system with multiple inheritance.
   - Add dynamic type learning from examples.
@@ -383,7 +403,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Hierarchical reasoning with dynamic abstractions.
 - **Tests**: Concept formation, abstraction reasoning, and type inference.
 
-### Milestone 10: LLM Integration and Learning
+### Milestone 11: LLM Integration and Learning
 - **Tasks**:
   - Implement `UnifiedClient` with `reqwest` for Claude/Ollama.
   - Add knowledge extraction for propositions and implications.
@@ -394,7 +414,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Automated knowledge extraction and learning.
 - **Tests**: Extraction accuracy and learning performance.
 
-### Milestone 11: Web Interface and Visualization
+### Milestone 12: Web Interface and Visualization
 - **Tasks**:
   - Create embedded web server for visualization.
   - Implement interactive belief network graph display.
@@ -405,7 +425,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Graphical interface for exploration and analysis.
 - **Tests**: Usability tests and visual correctness.
 
-### Milestone 12: Performance Optimization and Integration
+### Milestone 13: Performance Optimization and Integration
 - **Tasks**:
   - Implement SIMD optimization for numeric operations.
   - Add optional GPU acceleration using WGPU.
@@ -459,10 +479,21 @@ After examining the reference implementation, we're adopting a transparent adapt
    - Property naming conventions for consistent data access
 
 3. **Storage Patterns**:
-   - Key-Value storage using KeyValue nodes
-   - Hash storage using Hash nodes with nested property objects
-   - Set storage using Set nodes connected to SetMember nodes
-   - List storage using List nodes connected to ordered ListItem nodes
+   - Proper graph representation of network components:
+     - Proposition nodes with belief values and evidence markers
+     - Factor nodes connected to premise and conclusion propositions
+     - Predicate nodes with connections to arguments
+     - Entity nodes with connections to domains
+   - Specialized QBBN operations that leverage graph structure:
+     - store_proposition - Creates a full proposition with all related nodes
+     - create_factor - Creates a factor with premises and conclusion
+     - set_evidence - Sets evidence on proposition nodes
+     - update_belief - Updates pi/lambda/belief values on nodes
+   - Legacy compatibility through Redis-like primitives:
+     - Key-Value storage using KeyValue nodes
+     - Hash storage using proper node types based on semantic meaning
+     - Set storage using specialized edge connections
+     - List storage using ordered edges with position properties
 
 4. **Training Support**:
    - Weight storage in the graph database

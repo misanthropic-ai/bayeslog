@@ -218,7 +218,7 @@ impl GraphDBAdapter {
     }
     
     /// Get a probability value for a proposition
-    fn get_proposition_probability(&mut self, namespace: &str, prop_hash: &str) -> Result<Option<String>, Box<dyn Error>> {
+    fn get_proposition_probability(&mut self, _namespace: &str, prop_hash: &str) -> Result<Option<String>, Box<dyn Error>> {
         // Find the Proposition node
         let prop_nodes = self.graph_db.find_nodes_by_property("predicate_hash", prop_hash)?;
         
@@ -405,15 +405,14 @@ impl GraphDBAdapter {
     }
     
     /// Adds evidence to the belief network
-    fn add_evidence(&mut self, namespace: &str, key: &str, proposition_hash: &str) -> Result<bool, Box<dyn Error>> {
+    fn add_evidence(&mut self, namespace: &str, _key: &str, proposition_hash: &str) -> Result<bool, Box<dyn Error>> {
         // Find the proposition node
         let prop_nodes = self.graph_db.find_nodes_by_property("predicate_hash", proposition_hash)?;
-        let prop_id = if let Some(node) = prop_nodes.first() {
+        if let Some(node) = prop_nodes.first() {
             // Update existing proposition to mark as evidence
             let mut props = node.properties.clone();
             props.insert("evidence".to_string(), Value::Boolean(true));
             self.graph_db.update_node(&node.id, props)?;
-            node.id.clone()
         } else {
             // Create new proposition node marked as evidence
             let props = HashMap::from([
@@ -422,7 +421,7 @@ impl GraphDBAdapter {
                 ("namespace".to_string(), Value::String(namespace.to_string())),
             ]);
             
-            self.graph_db.add_node(&NodeLabel::Proposition.as_str(), props)?
+            self.graph_db.add_node(&NodeLabel::Proposition.as_str(), props)?;
         };
         
         Ok(true)
@@ -499,7 +498,7 @@ impl GraphDBAdapter {
     }
     
     /// Gets all premises of a factor
-    fn get_premises_of_factor(&mut self, namespace: &str, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    fn get_premises_of_factor(&mut self, _namespace: &str, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
         // Extract factor ID from the key (format: "premises:factor_id")
         let factor_id = key.trim_start_matches("premises:");
         
@@ -1036,7 +1035,7 @@ impl GraphDBAdapter {
     }
     
     /// Find all factors that have a specific proposition as a premise
-    pub fn find_factors_with_premise(&mut self, namespace: &str, proposition_hash: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    pub fn find_factors_with_premise(&mut self, _namespace: &str, proposition_hash: &str) -> Result<Vec<String>, Box<dyn Error>> {
         // Find the proposition node
         let prop_nodes = self.graph_db.find_nodes_by_property("predicate_hash", proposition_hash)?;
         
@@ -1062,7 +1061,7 @@ impl GraphDBAdapter {
     }
     
     /// Find all propositions connected to a factor (premises and conclusions)
-    pub fn get_connected_propositions(&mut self, namespace: &str, factor_id: &str) -> Result<(Vec<String>, Vec<String>), Box<dyn Error>> {
+    pub fn get_connected_propositions(&mut self, _namespace: &str, factor_id: &str) -> Result<(Vec<String>, Vec<String>), Box<dyn Error>> {
         // Find the factor node
         let factor_nodes = self.graph_db.find_nodes_by_property("factor_id", factor_id)?;
         
