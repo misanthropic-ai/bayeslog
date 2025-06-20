@@ -127,9 +127,47 @@ pub fn compute_potential(weights: &HashMap<String, f64>, features: &HashMap<Stri
 pub fn features_from_factor(
     factor: &FactorContext,
 ) -> Result<Vec<HashMap<String, f64>>, Box<dyn Error>> {
+    // Check if this is a conjunction (AND gate) or disjunction (OR gate)
+    // by looking at the structure of the factor
+    let is_conjunction = factor.factor.iter().any(|f| {
+        // If any premise is a group (multiple propositions), it's likely a conjunction
+        f.premise.terms.len() > 1
+    });
+    
     let mut vec_result = vec![];
     for class_label in CLASS_LABELS {
         let mut result = HashMap::new();
+        
+        if is_conjunction {
+            // Extract AND-gate specific features
+            debug!("Extracting features for AND gate");
+            
+            // Feature 1: Number of premises (conjunction size)
+            let num_premises = factor.probabilities.len() as f64;
+            result.insert(format!("and_size_{}", class_label), num_premises);
+            
+            // Feature 2: Number of true premises
+            let num_true = factor.probabilities.iter().filter(|&&p| p > 0.5).count() as f64;
+            result.insert(format!("and_num_true_{}", class_label), num_true);
+            
+            // Feature 3: All true indicator
+            let all_true = factor.probabilities.iter().all(|&p| p > 0.5);
+            result.insert(format!("and_all_true_{}", class_label), if all_true { 1.0 } else { 0.0 });
+            
+            // Feature 4: Any false indicator
+            let any_false = factor.probabilities.iter().any(|&p| p <= 0.5);
+            result.insert(format!("and_any_false_{}", class_label), if any_false { 1.0 } else { 0.0 });
+            
+            // Feature 5: Product of probabilities (soft AND)
+            let soft_and = factor.probabilities.iter().product::<f64>();
+            result.insert(format!("and_soft_{}", class_label), soft_and);
+            
+            // Feature 6: Min probability (weakest link)
+            let min_prob = factor.probabilities.iter().fold(1.0f64, |a, &b| a.min(b));
+            result.insert(format!("and_min_{}", class_label), min_prob);
+        }
+        
+        // Always include the original features for backward compatibility
         for (i, premise) in factor.factor.iter().enumerate() {
             debug!("Processing backimplication {}", i);
             let feature = premise.inference.unique_key();
@@ -148,9 +186,10 @@ pub fn features_from_factor(
                 i, posf, negf
             );
         }
+        
         vec_result.push(result);
     }
-    trace!("features_from_backimplications completed successfully");
+    trace!("features_from_factor completed successfully");
     Ok(vec_result)
 }
 

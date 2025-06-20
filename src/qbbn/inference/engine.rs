@@ -246,7 +246,7 @@ impl Inferencer {
                 conclusion,
             )
         } else {
-            self.score_factor_assignment_conjunction(premises, premise_assignment, conclusion)
+            self.score_factor_assignment_conjunction(connection, premises, premise_assignment, conclusion)
         }
     }
 
@@ -275,16 +275,26 @@ impl Inferencer {
 
     pub fn score_factor_assignment_conjunction(
         &self,
-        _premises: &[PropositionNode],
+        connection: &mut Connection,
+        premises: &[PropositionNode],
         premise_assignment: &HashMap<PropositionNode, bool>,
-        _conclusion: &PropositionNode,
+        conclusion: &PropositionNode,
     ) -> Result<f64, Box<dyn Error>> {
-        let mut and_result = true;
-        for value in premise_assignment.values() {
-            and_result &= *value;
+        // Use the same ExponentialModel for AND gates as we do for OR gates
+        let mut proposition_premises = vec![];
+        for node_premise in premises {
+            proposition_premises.push(node_premise.extract_group());
         }
-        let result = if and_result { 1f64 } else { 0f64 };
-        Ok(result)
+        let proposition_conclusion = conclusion.extract_single();
+        let context = build_factor_context_for_assignment(
+            &self.proposition_graph,
+            &proposition_premises,
+            premise_assignment,
+            &proposition_conclusion,
+        );
+        let statistics = self.model.model.predict(connection, &context)?;
+        trace!("score_factor_assignment_conjunction; premises: {:?}, assignment: {:?}, conclusion {:?}, probability {}", premises, premise_assignment, conclusion, statistics.probability);
+        Ok(statistics.probability)
     }
 }
 
