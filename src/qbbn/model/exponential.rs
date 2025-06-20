@@ -1,9 +1,10 @@
 use super::objects::ImplicationFactor;
 use super::weights::{negative_feature, positive_feature, ExponentialWeights, CLASS_LABELS};
+use super::ModelWeights;
 use crate::qbbn::common::interface::{PredictStatistics, TrainStatistics};
 use crate::qbbn::common::model::{FactorContext, FactorModel};
 use crate::qbbn::common::redis::MockConnection as Connection;
-use log::{debug, trace};
+use log::{debug, info, trace};
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::Arc;
@@ -20,12 +21,45 @@ impl ExponentialModel {
             weights,
         }))
     }
+    
     pub fn new_shared(namespace: String) -> Result<Arc<dyn FactorModel>, Box<dyn Error>> {
         let weights = ExponentialWeights::new(namespace.clone())?;
         Ok(Arc::new(ExponentialModel {
             print_training_loss: false,
             weights,
         }))
+    }
+    
+    /// Create a new ExponentialModel from a saved file
+    pub fn from_file(namespace: String, path: &str) -> Result<Box<dyn FactorModel>, Box<dyn Error>> {
+        info!("Loading ExponentialModel from file: {}", path);
+        let model_weights = ModelWeights::load_from_file(path)?;
+        
+        // Verify namespace matches
+        if model_weights.namespace != namespace {
+            return Err(format!(
+                "Namespace mismatch: file contains '{}', expected '{}'",
+                model_weights.namespace, namespace
+            ).into());
+        }
+        
+        let mut weights = ExponentialWeights::new(namespace)?;
+        // Create a temporary connection for loading weights
+        let mut temp_conn = Connection::new_in_memory()?;
+        weights.load_from_model_weights(&mut temp_conn, &model_weights)?;
+        
+        Ok(Box::new(ExponentialModel {
+            print_training_loss: false,
+            weights,
+        }))
+    }
+    
+    /// Save the model weights to a file
+    pub fn save_to_file(&self, connection: &mut Connection, path: &str) -> Result<(), Box<dyn Error>> {
+        info!("Saving ExponentialModel to file: {}", path);
+        let model_weights = self.weights.to_model_weights(connection)?;
+        model_weights.save_to_file(path)?;
+        Ok(())
     }
 }
 
@@ -248,5 +282,13 @@ impl FactorModel for ExponentialModel {
             probability
         );
         Ok(PredictStatistics { probability })
+    }
+    
+    fn save_to_file(&self, connection: &mut Connection, path: &str) -> Result<(), Box<dyn Error>> {
+        self.save_to_file(connection, path)
+    }
+    
+    fn model_type(&self) -> &str {
+        "exponential"
     }
 }

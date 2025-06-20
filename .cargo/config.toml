@@ -1,0 +1,11 @@
+[env]
+LIBTORCH = "/Users/shannon/Workspace/artivus/bayeslog/libtorch_cache/libtorch"
+LIBTORCH_USE_PYTORCH = "1"
+
+# For macOS, we need to set DYLD_LIBRARY_PATH at runtime
+# This can be done with a runner script
+[target.aarch64-apple-darwin]
+runner = "./run_with_libtorch.sh"
+
+[target.x86_64-apple-darwin]
+runner = "./run_with_libtorch.sh"

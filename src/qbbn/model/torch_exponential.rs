@@ -1,6 +1,7 @@
 use super::objects::ImplicationFactor;
 use super::torch_weights::TorchWeights;
 use super::device::{TorchConfig, OptimizerType};
+use super::ModelWeights;
 use crate::qbbn::common::interface::{PredictStatistics, TrainStatistics};
 use crate::qbbn::common::model::{FactorContext, FactorModel};
 use crate::qbbn::common::redis::MockConnection as Connection;
@@ -49,6 +50,40 @@ impl TorchExponentialModel {
             optimizer: Arc::new(Mutex::new(None)),
             training_step: Arc::new(Mutex::new(0)),
         }))
+    }
+    
+    /// Create a new TorchExponentialModel from a saved file
+    pub fn from_file(namespace: String, path: &str) -> Result<Box<dyn FactorModel>, Box<dyn Error>> {
+        info!("Loading TorchExponentialModel from file: {}", path);
+        let model_weights = ModelWeights::load_from_file(path)?;
+        
+        // Verify namespace matches
+        if model_weights.namespace != namespace {
+            return Err(format!(
+                "Namespace mismatch: file contains '{}', expected '{}'",
+                model_weights.namespace, namespace
+            ).into());
+        }
+        
+        let config = TorchConfig::from_env();
+        let mut weights = TorchWeights::new(namespace, config.device)?;
+        weights.load_from_model_weights(&model_weights)?;
+        
+        Ok(Box::new(TorchExponentialModel {
+            config,
+            weights,
+            var_store: Arc::new(Mutex::new(None)),
+            optimizer: Arc::new(Mutex::new(None)),
+            training_step: Arc::new(Mutex::new(0)),
+        }))
+    }
+    
+    /// Save the model weights to a file
+    pub fn save_to_file(&self, path: &str) -> Result<(), Box<dyn Error>> {
+        info!("Saving TorchExponentialModel to file: {}", path);
+        let model_weights = self.weights.to_model_weights()?;
+        model_weights.save_to_file(path)?;
+        Ok(())
     }
 
     /// Initialize optimizer when we have weights
@@ -295,5 +330,13 @@ impl FactorModel for TorchExponentialModel {
         
         trace!("TorchExponentialModel::predict - probability: {}", probability);
         Ok(PredictStatistics { probability })
+    }
+    
+    fn save_to_file(&self, _connection: &mut Connection, path: &str) -> Result<(), Box<dyn Error>> {
+        self.save_to_file(path)
+    }
+    
+    fn model_type(&self) -> &str {
+        "torch_exponential"
     }
 }

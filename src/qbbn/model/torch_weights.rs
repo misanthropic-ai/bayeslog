@@ -1,6 +1,7 @@
 use crate::qbbn::common::redis::MockConnection as Connection;
 use crate::qbbn::model::objects::ImplicationFactor;
 use crate::qbbn::model::weights::{positive_feature, negative_feature, CLASS_LABELS};
+use crate::qbbn::model::ModelWeights;
 use log::trace;
 use std::collections::HashMap;
 use std::error::Error;
@@ -188,5 +189,75 @@ impl TorchWeights {
         }
         
         Ok(Tensor::from_slice(&values).to_device(self.device))
+    }
+    
+    /// Convert weights to ModelWeights format
+    pub fn to_model_weights(&self) -> Result<ModelWeights, Box<dyn Error>> {
+        trace!("TorchWeights::to_model_weights - Start");
+        
+        let feature_indices = self.feature_indices.lock().unwrap();
+        let weights_tensor = self.weights.lock().unwrap();
+        
+        let mut weight_map = HashMap::new();
+        
+        if let Some(tensor) = weights_tensor.as_ref() {
+            // Convert tensor weights to HashMap
+            for (feature, &idx) in feature_indices.iter() {
+                if idx >= 0 && idx < tensor.size()[0] {
+                    let weight_value = tensor.double_value(&[idx]);
+                    weight_map.insert(feature.clone(), weight_value);
+                }
+            }
+        }
+        
+        let model_weights = ModelWeights::from_tensor_data(
+            weight_map,
+            feature_indices.clone(),
+            self.namespace.clone(),
+        );
+        
+        trace!("TorchWeights::to_model_weights - End");
+        Ok(model_weights)
+    }
+    
+    /// Load weights from ModelWeights format
+    pub fn load_from_model_weights(&mut self, model_weights: &ModelWeights) -> Result<(), Box<dyn Error>> {
+        trace!("TorchWeights::load_from_model_weights - Start");
+        
+        let mut feature_indices = self.feature_indices.lock().unwrap();
+        let mut weights = self.weights.lock().unwrap();
+        let mut next_index = self.next_index.lock().unwrap();
+        
+        // Clear existing data
+        feature_indices.clear();
+        *weights = None;
+        *next_index = 0;
+        
+        // Load feature indices
+        *feature_indices = model_weights.feature_indices.clone();
+        
+        // Find the maximum index
+        let max_index = feature_indices.values().max().copied().unwrap_or(-1);
+        if max_index >= 0 {
+            *next_index = max_index + 1;
+            
+            // Create weight tensor
+            let mut weight_values = vec![0.0f32; (*next_index) as usize];
+            
+            // Fill in the weights
+            for (feature, &idx) in feature_indices.iter() {
+                if let Some(&weight) = model_weights.weights.get(feature) {
+                    if idx >= 0 && (idx as usize) < weight_values.len() {
+                        weight_values[idx as usize] = weight as f32;
+                    }
+                }
+            }
+            
+            // Create tensor from values
+            *weights = Some(Tensor::from_slice(&weight_values).to_device(self.device));
+        }
+        
+        trace!("TorchWeights::load_from_model_weights - End");
+        Ok(())
     }
 }

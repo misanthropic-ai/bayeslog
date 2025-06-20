@@ -425,22 +425,73 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Graphical interface for exploration and analysis.
 - **Tests**: Usability tests and visual correctness.
 
-### Milestone 13: GPU-Accelerated ExponentialModel
+### Milestone 13: GPU-Accelerated ExponentialModel ✅
 - **Tasks**:
-  - Add PyTorch bindings (tch-rs) to Cargo.toml with CUDA/MPS support
-  - Create TorchExponentialModel implementing FactorModel trait
-  - Implement automatic device selection (MPS on macOS, CUDA on Linux/Windows, CPU fallback)
-  - Convert weight storage to tensor-based operations
-  - Implement modern optimizers (Adam, AdamW, SGD with momentum)
-  - Add batch training support for efficient GPU utilization
-  - Create learning rate scheduling and early stopping
-  - Implement vectorized inference for batch predictions
-  - Add configuration for optimizer selection and hyperparameters
-  - Create benchmarks comparing CPU vs GPU performance
-- **Deliverables**: GPU-accelerated training and inference with 10-100x speedup
-- **Tests**: Performance benchmarks, numerical consistency tests, device fallback tests
+  - Add PyTorch bindings (tch-rs) to Cargo.toml with CUDA/MPS support ✅
+  - Create TorchExponentialModel implementing FactorModel trait ✅
+  - Implement automatic device selection (MPS on macOS, CUDA on Linux/Windows, CPU fallback) ✅
+  - Convert weight storage to tensor-based operations ✅
+  - Implement modern optimizers (Adam, AdamW, SGD with momentum) ✅
+  - Add batch training support for efficient GPU utilization ✅
+  - Create learning rate scheduling and early stopping (partial - optimizer created, scheduling pending)
+  - Implement vectorized inference for batch predictions ✅
+  - Add configuration for optimizer selection and hyperparameters ✅
+  - Create benchmarks comparing CPU vs GPU performance ✅
+- **Deliverables**: GPU-accelerated training and inference with 10-17% speedup on moderate datasets (50-200 entities)
+- **Tests**: Performance benchmarks completed, showing:
+  - Standard model faster for small datasets (<10 entities) due to PyTorch overhead
+  - Break-even at ~10 entities
+  - GPU advantage emerges at 50+ entities: 10.5% faster at 50, 13.9% faster at 100, 17.3% faster at 200
+  - MPS device support confirmed on macOS
+- **Implementation Notes**:
+  - TorchExponentialModel successfully integrated with FactorModel trait
+  - Thread-safe implementation using Arc<Mutex<>> for optimizer and VarStore
+  - Automatic device selection prioritizes MPS on macOS, CUDA on Linux/Windows
+  - Tensor-based weight storage with dynamic resizing
+  - Adam optimizer with configurable hyperparameters
+  - Batch training infrastructure ready but currently processes examples individually
+  - Environment variable BAYESLOG_USE_TORCH controls model selection
 
-### Milestone 14: Performance Optimization and Integration
+### Milestone 14: Model Compatibility and LLM-Friendly Interface ✅
+- **Tasks**:
+  - Implement weight export/import for ExponentialModel ✅
+  - Create ModelWeights common format with metadata ✅
+  - Add save/load methods to FactorModel trait ✅
+  - Create UnifiedExponentialModel for automatic CPU/GPU switching ✅
+  - Implement BeliefMemory high-level API for LLM integration ✅
+  - Add entity linking and graph integration ✅
+  - Create proposition management with prior beliefs ✅
+  - Implement belief updates from observations ✅
+  - Add entity-based belief queries ✅
+  - Set up automatic libtorch path configuration ✅
+- **Deliverables**: Seamless model compatibility and LLM-friendly interface
+- **Tests**: Created examples demonstrating:
+  - Model compatibility between CPU and GPU implementations
+  - BeliefMemory API for agent memory scenarios
+  - Automatic environment setup for easier development
+- **Implementation Notes**:
+  - ModelWeights format supports both ExponentialModel and TorchExponentialModel
+  - BeliefMemory provides high-level API for LLM agents
+  - Entities and propositions are stored in graph database with proper linking
+  - Quick belief updates without full training for interactive scenarios
+  - Cargo configuration automatically handles libtorch paths
+
+### Milestone 15: Enhanced GPU Optimization
+- **Tasks**:
+  - Implement true batch training in TorchExponentialModel (currently processes examples individually)
+  - Add learning rate scheduling (cosine annealing, step decay, exponential decay)
+  - Implement early stopping based on validation loss
+  - Add mixed precision training (FP16/BF16) for faster computation
+  - Create GPU memory optimization with gradient checkpointing
+  - Implement model parallelism for very large networks
+  - Add distributed training support for multi-GPU systems
+  - Create ONNX export for inference deployment
+  - Optimize batch size based on available GPU memory
+  - Add warmup steps for optimizer stability
+- **Deliverables**: 10-100x speedup for large-scale training scenarios
+- **Tests**: Large-scale benchmarks, memory usage profiling, multi-GPU scaling tests
+
+### Milestone 16: Performance Optimization and Integration
 - **Tasks**:
   - Implement SIMD optimization for numeric operations.
   - Add optional GPU acceleration using WGPU.
