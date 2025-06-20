@@ -19,8 +19,13 @@
 
 # Project specific
 /reference
+/libtorch_cache/
+libtorch/
 
 # SQLite database files
 *.db
 *.sqlite
 *.sqlite3
+
+# Environment files
+.env

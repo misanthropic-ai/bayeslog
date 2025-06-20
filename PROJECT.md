@@ -425,7 +425,22 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Graphical interface for exploration and analysis.
 - **Tests**: Usability tests and visual correctness.
 
-### Milestone 13: Performance Optimization and Integration
+### Milestone 13: GPU-Accelerated ExponentialModel
+- **Tasks**:
+  - Add PyTorch bindings (tch-rs) to Cargo.toml with CUDA/MPS support
+  - Create TorchExponentialModel implementing FactorModel trait
+  - Implement automatic device selection (MPS on macOS, CUDA on Linux/Windows, CPU fallback)
+  - Convert weight storage to tensor-based operations
+  - Implement modern optimizers (Adam, AdamW, SGD with momentum)
+  - Add batch training support for efficient GPU utilization
+  - Create learning rate scheduling and early stopping
+  - Implement vectorized inference for batch predictions
+  - Add configuration for optimizer selection and hyperparameters
+  - Create benchmarks comparing CPU vs GPU performance
+- **Deliverables**: GPU-accelerated training and inference with 10-100x speedup
+- **Tests**: Performance benchmarks, numerical consistency tests, device fallback tests
+
+### Milestone 14: Performance Optimization and Integration
 - **Tasks**:
   - Implement SIMD optimization for numeric operations.
   - Add optional GPU acceleration using WGPU.

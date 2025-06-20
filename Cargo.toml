@@ -24,6 +24,7 @@ colored = "3.0.0"
 log = "0.4.27"
 walkdir = "2.5.0"
 rocket = { version = "0.5.1", features = ["json"] }
+tch = "0.18.0"
 
 [dev-dependencies]
 tempfile = "3.10.1"
