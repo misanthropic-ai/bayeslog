@@ -9,6 +9,8 @@ pub mod device;
 pub mod torch_weights;
 pub mod torch_exponential;
 pub mod unified;
+pub mod delta_weights;
+pub mod weight_manager;
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;

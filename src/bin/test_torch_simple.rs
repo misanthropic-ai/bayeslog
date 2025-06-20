@@ -37,7 +37,7 @@ fn test_torch_optimizer() -> Result<(), Box<dyn std::error::Error>> {
     let config = TorchConfig::default();
     
     // Create a simple model (just a weight vector)
-    let mut vs = nn::VarStore::new(device);
+    let vs = nn::VarStore::new(device);
     let weights = vs.root().var("weights", &[10], nn::Init::Randn { mean: 0.0, stdev: 1.0 });
     
     // Create optimizer

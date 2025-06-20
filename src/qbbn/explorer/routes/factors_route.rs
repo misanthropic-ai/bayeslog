@@ -103,7 +103,7 @@ fn iterate_through_factors(
 }
 
 pub fn internal_factors(experiment_name: &str, resource_context: &ResourceContext) -> Html<String> {
-    let graph = InferenceGraph::new_mutable(experiment_name.to_string()).unwrap();
+    let _graph = InferenceGraph::new_mutable(experiment_name.to_string()).unwrap();
     let body_html = iterate_through_factors(experiment_name, resource_context).unwrap();
     let result = render_app_body(&body_html);
     Html(result.unwrap())

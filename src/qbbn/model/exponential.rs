@@ -1,5 +1,6 @@
 use super::objects::ImplicationFactor;
 use super::weights::{negative_feature, positive_feature, ExponentialWeights, CLASS_LABELS};
+use super::weight_manager::{WeightManager, WeightManagerConfig};
 use super::ModelWeights;
 use crate::qbbn::common::interface::{PredictStatistics, TrainStatistics};
 use crate::qbbn::common::model::{FactorContext, FactorModel};
@@ -7,26 +8,47 @@ use crate::qbbn::common::redis::MockConnection as Connection;
 use log::{debug, info, trace};
 use std::collections::HashMap;
 use std::error::Error;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 pub struct ExponentialModel {
     print_training_loss: bool,
-    weights: ExponentialWeights,
+    weights: Arc<RwLock<WeightManager>>,
+    /// Whether to enable online learning with delta weights
+    online_learning: bool,
 }
 
 impl ExponentialModel {
     pub fn new_mutable(namespace: String) -> Result<Box<dyn FactorModel>, Box<dyn Error>> {
-        let weights = ExponentialWeights::new(namespace.clone())?;
+        let base_weights = ExponentialWeights::new(namespace.clone())?;
+        let weights = Arc::new(RwLock::new(WeightManager::new(base_weights, namespace.clone())));
         Ok(Box::new(ExponentialModel {
             print_training_loss: false,
             weights,
+            online_learning: true, // Enable by default
         }))
     }
     
     pub fn new_shared(namespace: String) -> Result<Arc<dyn FactorModel>, Box<dyn Error>> {
-        let weights = ExponentialWeights::new(namespace.clone())?;
+        let base_weights = ExponentialWeights::new(namespace.clone())?;
+        let weights = Arc::new(RwLock::new(WeightManager::new(base_weights, namespace.clone())));
         Ok(Arc::new(ExponentialModel {
             print_training_loss: false,
             weights,
+            online_learning: true,
+        }))
+    }
+    
+    /// Create with custom configuration
+    pub fn new_with_config(
+        namespace: String,
+        config: WeightManagerConfig,
+        online_learning: bool,
+    ) -> Result<Box<dyn FactorModel>, Box<dyn Error>> {
+        let base_weights = ExponentialWeights::new(namespace.clone())?;
+        let weights = Arc::new(RwLock::new(WeightManager::with_config(base_weights, namespace.clone(), config)));
+        Ok(Box::new(ExponentialModel {
+            print_training_loss: false,
+            weights,
+            online_learning,
         }))
     }
     
@@ -43,22 +65,37 @@ impl ExponentialModel {
             ).into());
         }
         
-        let mut weights = ExponentialWeights::new(namespace)?;
+        let mut base_weights = ExponentialWeights::new(namespace.clone())?;
         // Create a temporary connection for loading weights
         let mut temp_conn = Connection::new_in_memory()?;
-        weights.load_from_model_weights(&mut temp_conn, &model_weights)?;
+        base_weights.load_from_model_weights(&mut temp_conn, &model_weights)?;
+        
+        let weights = Arc::new(RwLock::new(WeightManager::new(base_weights, namespace)));
         
         Ok(Box::new(ExponentialModel {
             print_training_loss: false,
             weights,
+            online_learning: true,
         }))
     }
     
     /// Save the model weights to a file
     pub fn save_to_file(&self, connection: &mut Connection, path: &str) -> Result<(), Box<dyn Error>> {
         info!("Saving ExponentialModel to file: {}", path);
-        let model_weights = self.weights.to_model_weights(connection)?;
+        
+        // Optionally consolidate before saving
+        if self.online_learning {
+            let stats = self.weights.read().unwrap().get_delta_stats();
+            if stats.num_features > 0 {
+                info!("Consolidating {} delta weights before save", stats.num_features);
+                self.weights.write().unwrap().consolidate(super::weight_manager::ConsolidationTrigger::Manual)?;
+            }
+        }
+        
+        // Export all weights (base + delta)
+        let model_weights = self.weights.read().unwrap().export_weights(connection)?;
         model_weights.save_to_file(path)?;
+        
         Ok(())
     }
 }
@@ -164,7 +201,7 @@ impl FactorModel for ExponentialModel {
         connection: &mut Connection,
         implication: &ImplicationFactor,
     ) -> Result<(), Box<dyn Error>> {
-        self.weights.initialize_weights(connection, implication)?;
+        self.weights.write().unwrap().initialize_weights(connection, implication)?;
         Ok(())
     }
 
@@ -195,7 +232,7 @@ impl FactorModel for ExponentialModel {
                 "train_on_example - Reading weights for class {}",
                 class_label
             );
-            let weight_vector = match self.weights.read_weight_vector(
+            let weight_vector = match self.weights.read().unwrap().read_weight_vector(
                 connection,
                 &features[class_label].keys().cloned().collect::<Vec<_>>(),
             ) {
@@ -223,14 +260,31 @@ impl FactorModel for ExponentialModel {
             let gold = compute_expected_features(this_true_prob, &features[class_label]);
             let expected = compute_expected_features(probability, &features[class_label]);
             trace!("train_on_example - Performing SGD update");
-            let new_weight = do_sgd_update(
+            let new_weights = do_sgd_update(
                 &weight_vectors[class_label],
                 &gold,
                 &expected,
                 self.print_training_loss,
             );
-            trace!("train_on_example - Saving new weights");
-            self.weights.save_weight_vector(connection, &new_weight)?;
+            
+            if self.online_learning {
+                // For online learning, compute deltas and update
+                trace!("train_on_example - Updating delta weights");
+                let mut weight_deltas = HashMap::new();
+                for (feature, new_weight) in &new_weights {
+                    if let Some(old_weight) = weight_vectors[class_label].get(feature) {
+                        let delta = new_weight - old_weight;
+                        if delta.abs() > 1e-8 { // Only update if meaningful change
+                            weight_deltas.insert(feature.clone(), delta);
+                        }
+                    }
+                }
+                self.weights.write().unwrap().update_weights(&weight_deltas);
+            } else {
+                // For batch training, save directly (this won't work with WeightManager yet)
+                // TODO: Add batch training mode to WeightManager
+                return Err("Batch training mode not yet implemented with WeightManager".into());
+            }
         }
         trace!("train_on_example - End");
         Ok(TrainStatistics { loss: 1f64 })
@@ -257,7 +311,7 @@ impl FactorModel for ExponentialModel {
                 trace!("feature {:?} {}", &feature, weight);
             }
             trace!("inference_probability - Reading weights");
-            let weight_vector = match self.weights.read_weight_vector(
+            let weight_vector = match self.weights.read().unwrap().read_weight_vector(
                 connection,
                 &this_features.keys().cloned().collect::<Vec<_>>(),
             ) {

@@ -98,11 +98,11 @@ impl TorchExponentialModel {
             // Get current weights or initialize new ones
             let weight_size = if let Some(weight_tensor) = self.weights.get_weight_tensor() {
                 let size = weight_tensor.size()[0];
-                vars.root().var_copy("weights", &weight_tensor);
+                let _ = vars.root().var_copy("weights", &weight_tensor);
                 size
             } else {
                 // Start with space for 100 features
-                vars.root().randn("weights", &[100], 0.0, 0.1);
+                let _ = vars.root().randn("weights", &[100], 0.0, 0.1);
                 100
             };
             
@@ -271,7 +271,7 @@ impl FactorModel for TorchExponentialModel {
                 let probs = potentials_tensor.softmax(0, Kind::Float);
                 
                 // Extract probability for class 1
-                let predicted_prob = probs.double_value(&[1]);
+                let _predicted_prob = probs.double_value(&[1]);
                 
                 // Compute negative log likelihood loss
                 let loss_tensor = if gold_probability > 0.5 {

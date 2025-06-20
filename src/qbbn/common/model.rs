@@ -55,7 +55,7 @@ pub trait FactorModel: Send + Sync {
     ) -> Result<PredictStatistics, Box<dyn Error>>;
     
     /// Export model weights to a file (optional implementation)
-    fn save_to_file(&self, connection: &mut Connection, path: &str) -> Result<(), Box<dyn Error>> {
+    fn save_to_file(&self, _connection: &mut Connection, _path: &str) -> Result<(), Box<dyn Error>> {
         Err("Model does not support saving to file".into())
     }
     

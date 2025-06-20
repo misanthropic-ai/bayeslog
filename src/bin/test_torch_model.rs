@@ -5,8 +5,9 @@ use bayeslog::qbbn::{
     model::{
         torch_exponential::TorchExponentialModel,
         exponential::ExponentialModel,
-        objects::{ImplicationFactor, Proposition, Argument, PropositionFactor},
+        objects::{ImplicationFactor, Proposition, Argument},
     },
+    inference::graph::PropositionFactor,
 };
 use log::info;
 use std::time::Instant;
@@ -59,19 +60,32 @@ fn create_test_factor() -> (ImplicationFactor, FactorContext) {
     };
     
     // Create factor context with some probabilities
+    use bayeslog::qbbn::model::objects::PropositionGroup;
+    let prop_group = PropositionGroup::new(vec![likes_prop]);
+    let prop_factor = PropositionFactor {
+        premise: prop_group,
+        conclusion: dates_prop,
+        inference: implication.clone(),
+    };
     let factor_context = FactorContext {
-        factor: vec![implication.clone()],
+        factor: vec![prop_factor],
         probabilities: vec![0.8], // likes(alice, bob) has 0.8 probability
     };
     
     (implication, factor_context)
 }
 
-fn test_model_operations<M: FactorModel>(model: &mut M, name: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn test_model_operations(model: &mut dyn FactorModel, name: &str) -> Result<(), Box<dyn std::error::Error>> {
     info!("Testing {} model...", name);
     
-    // Create mock connection
-    let mut connection = bayeslog::qbbn::common::redis::MockConnection::new();
+    // Create mock connection with in-memory graph adapter
+    use bayeslog::qbbn::graphdb::GraphDBAdapter;
+    use bayeslog::GraphDatabase;
+    use std::sync::Arc;
+    
+    let graph_db = Arc::new(GraphDatabase::new(":memory:").unwrap());
+    let adapter = GraphDBAdapter::new(graph_db, "test");
+    let mut connection = bayeslog::qbbn::common::redis::MockConnection::new(adapter);
     
     // Create test data
     let (implication, factor_context) = create_test_factor();
@@ -131,12 +145,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Test TorchExponentialModel
     info!("\n--- Testing TorchExponentialModel ---");
     let mut torch_model = TorchExponentialModel::new_mutable("test_torch".to_string())?;
-    test_model_operations(torch_model.as_mut(), "TorchExponential")?;
+    test_model_operations(&mut *torch_model, "TorchExponential")?;
     
     // Test standard ExponentialModel for comparison
     info!("\n--- Testing Standard ExponentialModel (for comparison) ---");
     let mut standard_model = ExponentialModel::new_mutable("test_standard".to_string())?;
-    test_model_operations(standard_model.as_mut(), "StandardExponential")?;
+    test_model_operations(&mut *standard_model, "StandardExponential")?;
     
     info!("\n=== All tests completed successfully! ===");
     Ok(())

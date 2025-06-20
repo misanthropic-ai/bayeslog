@@ -491,7 +491,66 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: 10-100x speedup for large-scale training scenarios
 - **Tests**: Large-scale benchmarks, memory usage profiling, multi-GPU scaling tests
 
-### Milestone 16: Performance Optimization and Integration
+### Milestone 16: Delta Weights & Online Learning Infrastructure ✅
+- **Tasks**:
+  - Phase 1: Delta Weight Infrastructure ✅
+    - Create DeltaWeights structure for sparse weight updates ✅
+    - Implement WeightManager to combine base + delta weights ✅
+    - Add update tracking (counts, timestamps) per feature ✅
+    - Modify ExponentialModel to use WeightManager ✅
+  - Phase 2: Consolidation Logic ✅
+    - Implement multiple consolidation triggers (size, time, count, memory) ✅
+    - Create smart merging strategies for hot features ✅
+    - Add audit trail for consolidation history (partial - stats tracking done)
+    - Implement rollback capability for delta weights (deferred - not critical)
+  - Phase 3: Configuration & Persistence ✅
+    - Add configuration for consolidation thresholds ✅
+    - Implement save/load for delta weights ✅
+    - Create versioning system for compatibility (using ModelWeights versioning)
+    - Support partial weight loading by namespace (implicit via namespace filtering)
+- **Deliverables**: LoRA-inspired delta weight system for efficient online learning ✅
+- **Tests**: Unit tests for delta operations, consolidation benchmarks, memory usage profiling ✅
+- **Implementation Notes**:
+  - DeltaWeights tracks sparse updates with timestamps and counts
+  - WeightManager seamlessly combines base + delta weights
+  - Hot features are kept with decay during consolidation
+  - ExponentialModel now uses Arc<RwLock<WeightManager>> for thread safety
+  - Consolidation can be triggered manually or automatically based on thresholds
+
+### Milestone 17: Probabilistic AND Gate Implementation
+- **Tasks**:
+  - Create AndGateModel similar to ExponentialModel
+  - Design features for AND gate learning:
+    - Conjunction size (number of inputs)
+    - Input strength probabilities
+    - Input correlations
+    - Temporal patterns
+  - Implement soft AND behavior with noise epsilon
+  - Generate training data from network observations
+  - Update inference engine to use learned AND gates
+  - Add configuration to switch between heuristic/learned AND
+  - Integrate with WeightManager for online updates
+- **Deliverables**: Learned probabilistic AND gates replacing simple heuristics
+- **Tests**: AND gate accuracy tests, comparison with heuristic baseline
+
+### Milestone 18: Online Learning API & Integration
+- **Tasks**:
+  - Add targeted update methods to BeliefMemory:
+    - update_or_gate() for single OR gate updates
+    - update_and_gate() for single AND gate updates
+    - consolidate_weights() for manual consolidation
+  - Implement importance sampling for selective updates
+  - Add weight decay for unused implications
+  - Create monitoring and visualization tools:
+    - Weight change heatmaps
+    - Learning curves per gate
+    - Consolidation history dashboard
+  - Optimize for memory efficiency with configurable caching
+  - Add performance metrics and logging
+- **Deliverables**: Complete online learning system for continuous belief network updates
+- **Tests**: Online learning convergence tests, API integration tests, performance benchmarks
+
+### Milestone 19: Performance Optimization and Integration
 - **Tasks**:
   - Implement SIMD optimization for numeric operations.
   - Add optional GPU acceleration using WGPU.
