@@ -7,6 +7,14 @@ Below is a comprehensive design for the **BayesLog** project, a modern knowledge
 ## Project Overview
 **BayesLog** is an embeddable knowledge representation and reasoning system combining a graph database, a Quantified Boolean Bayesian Network (QBBN) for probabilistic reasoning, an ontology for type hierarchies, and advanced indexing for retrieval. Built in Rust for performance and stability, it uses SQLite as its backend and supports a dynamic REPL environment with a Scheme-based programming interface via the Steel Scheme interpreter. The system aims to unify symbolic AI's structure with probabilistic reasoning, addressing the limitations of projects like OpenCyc while integrating modern tools like LLMs and vector search.
 
+### Recent Achievements
+- **GPU Acceleration**: Implemented TorchExponentialModel with CUDA/MPS support, achieving 10-17% speedup on moderate datasets
+- **Model Compatibility**: Created unified weight format allowing seamless CPU/GPU model switching
+- **LLM-Friendly API**: Built BeliefMemory interface for easy integration with LLM agents
+- **Online Learning**: Implemented LoRA-inspired delta weights system for efficient single-gate updates
+- **Probabilistic AND Gates**: Replaced heuristic AND gates with learned probabilistic models using 6 specialized features
+- **Graph-Native Storage**: Refactored to use proper graph structures for all QBBN components
+
 ### Objectives
 - Provide a scalable graph database for storing entities, relationships, and documents.
 - Implement a QBBN-based belief network with incremental propagation, parallel inference, and decision theory capabilities.
@@ -517,21 +525,30 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
   - ExponentialModel now uses Arc<RwLock<WeightManager>> for thread safety
   - Consolidation can be triggered manually or automatically based on thresholds
 
-### Milestone 17: Probabilistic AND Gate Implementation
+### Milestone 17: Probabilistic AND Gate Implementation ✅
 - **Tasks**:
-  - Create AndGateModel similar to ExponentialModel
-  - Design features for AND gate learning:
-    - Conjunction size (number of inputs)
-    - Input strength probabilities
-    - Input correlations
-    - Temporal patterns
-  - Implement soft AND behavior with noise epsilon
-  - Generate training data from network observations
-  - Update inference engine to use learned AND gates
-  - Add configuration to switch between heuristic/learned AND
-  - Integrate with WeightManager for online updates
-- **Deliverables**: Learned probabilistic AND gates replacing simple heuristics
-- **Tests**: AND gate accuracy tests, comparison with heuristic baseline
+  - Unified AND/OR gate handling in ExponentialModel ✅
+  - Designed and implemented AND gate features: ✅
+    - `and_size`: Number of premises in conjunction
+    - `and_num_true`: Count of true premises (> 0.5 threshold)
+    - `and_all_true`: Binary indicator for all premises true
+    - `and_any_false`: Binary indicator for any premise false
+    - `and_soft`: Product of all premise probabilities (soft AND)
+    - `and_min`: Minimum probability (weakest link)
+  - Implemented soft AND behavior with probabilistic reasoning ✅
+  - Created AND gate training scenario with diverse input patterns ✅
+  - Updated inference engine to use learned AND gates ✅
+  - Removed legacy heuristic AND gate code (1.0/0.0 returns) ✅
+  - Integrated with WeightManager for online updates ✅
+- **Deliverables**: Learned probabilistic AND gates using same mechanism as OR gates ✅
+- **Tests**: Comprehensive AND gate tests for hard and soft inputs ✅
+- **Documentation**: Created detailed AND_GATE_IMPLEMENTATION.md guide ✅
+- **Implementation Notes**:
+  - AND gates now use the same ExponentialModel as OR gates
+  - Feature extraction automatically detects conjunctions
+  - 6 specialized features capture AND gate semantics
+  - Training examples demonstrate various input combinations
+  - Probabilistic outputs enable nuanced reasoning beyond boolean logic
 
 ### Milestone 18: Online Learning API & Integration
 - **Tasks**:
@@ -724,6 +741,9 @@ These enhancements will build on the solid foundation of the adapted reference i
   - Generate API docs with `cargo doc` and include comprehensive examples.
   - Create interactive tutorials for the Scheme interface.
   - Provide visualization tools for understanding the system architecture.
+  - **Specialized Guides**:
+    - `docs/AND_GATE_IMPLEMENTATION.md`: Comprehensive guide for probabilistic AND gates
+    - Additional guides to be created for other major features
 - **Testing and Verification**:
   - Implement property-based testing for belief propagation.
   - Add fuzzing for robustness against unexpected inputs.
