@@ -1,4 +1,4 @@
-use std::{error::Error, rc::Rc};
+use std::error::Error;
 
 use crate::qbbn::common::redis::MockConnection;
 use rocket::response::content::RawHtml as Html;
@@ -6,10 +6,10 @@ use rocket::response::content::RawHtml as Html;
 use crate::qbbn::{
     common::{
         graph::InferenceGraph, model::InferenceModel, proposition_db::EmptyBeliefTable,
-        resources::ResourceContext, setup::CommandLineOptions, train::TrainingPlan,
+        resources::ResourceContext,
     },
     explorer::{
-        diagram_utils::{diagram_implication, diagram_predicate, diagram_proposition_factor},
+        diagram_utils::{diagram_predicate, diagram_proposition_factor},
         render_utils::render_app_body,
     },
     inference::{graph::PropositionGraph, engine::Inferencer, table::PropositionNode},

@@ -1,12 +1,14 @@
 use crate::qbbn::{
     common::redis::{map_get, map_insert},
     model::objects::ImplicationFactor,
+    model::ModelWeights,
 };
 use log::trace;
 use rand::Rng;
 use crate::qbbn::common::redis::MockConnection as Connection;
 use std::error::Error;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
 
 pub const CLASS_LABELS: [usize; 2] = [0, 1];
 
@@ -33,11 +35,17 @@ pub fn negative_feature(feature: &str, class_label: usize) -> String {
 
 pub struct ExponentialWeights {
     namespace: String,
+    /// Track all features that have been initialized or accessed
+    /// Arc<Mutex<>> allows thread-safe updates during concurrent training
+    known_features: Arc<Mutex<HashSet<String>>>,
 }
 
 impl ExponentialWeights {
     pub fn new(namespace: String) -> Result<ExponentialWeights, Box<dyn Error>> {
-        Ok(ExponentialWeights { namespace })
+        Ok(ExponentialWeights { 
+            namespace,
+            known_features: Arc::new(Mutex::new(HashSet::new())),
+        })
     }
 }
 
@@ -67,6 +75,13 @@ impl ExponentialWeights {
                 weight1,
                 weight2
             );
+            // Track the features
+            {
+                let mut features = self.known_features.lock().unwrap();
+                features.insert(posf.clone());
+                features.insert(negf.clone());
+            }
+            
             map_insert(
                 connection,
                 &self.namespace,
@@ -111,10 +126,19 @@ impl ExponentialWeights {
     ) -> Result<HashMap<String, f64>, Box<dyn Error>> {
         trace!("read_weights - Start");
         let mut weights = HashMap::new();
+        
+        // Track all features we're reading
+        {
+            let mut known = self.known_features.lock().unwrap();
+            for feature in features {
+                known.insert(feature.clone());
+            }
+        }
+        
         for feature in features {
             trace!("read_weights - Reading weight for feature: {}", feature);
             let weight_record = map_get(connection, &self.namespace, Self::WEIGHTS_KEY, feature)?
-                .expect("should be there");
+                .unwrap_or("0.0".to_string());
             let weight = weight_record.parse::<f64>().map_err(|e| {
                 trace!("read_weights - Error parsing weight: {:?}", e);
                 Box::new(e) as Box<dyn Error>
@@ -131,6 +155,15 @@ impl ExponentialWeights {
         weights: &HashMap<String, f64>,
     ) -> Result<(), Box<dyn Error>> {
         trace!("save_weights - Start");
+        
+        // Track all features we're saving
+        {
+            let mut known = self.known_features.lock().unwrap();
+            for feature in weights.keys() {
+                known.insert(feature.clone());
+            }
+        }
+        
         for (feature, &value) in weights {
             trace!(
                 "save_weights - Saving weight for feature {}: {}",
@@ -146,6 +179,61 @@ impl ExponentialWeights {
             )?;
         }
         trace!("save_weights - End");
+        Ok(())
+    }
+    
+    /// Convert weights to ModelWeights format
+    pub fn to_model_weights(&self, connection: &mut Connection) -> Result<ModelWeights, Box<dyn Error>> {
+        trace!("to_model_weights - Start");
+        
+        let known_features = self.known_features.lock().unwrap();
+        let mut weights = HashMap::new();
+        let mut feature_indices = HashMap::new();
+        
+        // Read all known features
+        for (idx, feature) in known_features.iter().enumerate() {
+            trace!("to_model_weights - Reading weight for feature: {}", feature);
+            
+            // Get the weight value
+            if let Some(weight_str) = map_get(connection, &self.namespace, Self::WEIGHTS_KEY, feature)? {
+                if let Ok(weight) = weight_str.parse::<f64>() {
+                    weights.insert(feature.clone(), weight);
+                    feature_indices.insert(feature.clone(), idx as i64);
+                }
+            }
+        }
+        
+        let model_weights = ModelWeights::from_weight_map(weights, self.namespace.clone());
+        
+        trace!("to_model_weights - End");
+        Ok(model_weights)
+    }
+    
+    /// Load weights from ModelWeights format
+    pub fn load_from_model_weights(&mut self, connection: &mut Connection, model_weights: &ModelWeights) -> Result<(), Box<dyn Error>> {
+        trace!("load_from_model_weights - Start");
+        
+        // Clear and update known features
+        {
+            let mut known = self.known_features.lock().unwrap();
+            known.clear();
+            for feature in model_weights.weights.keys() {
+                known.insert(feature.clone());
+            }
+        }
+        
+        // Store all weights
+        for (feature, &weight) in &model_weights.weights {
+            map_insert(
+                connection,
+                &self.namespace,
+                Self::WEIGHTS_KEY,
+                feature,
+                &weight.to_string(),
+            )?;
+        }
+        
+        trace!("load_from_model_weights - End");
         Ok(())
     }
 }

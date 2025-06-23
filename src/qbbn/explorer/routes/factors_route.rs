@@ -10,13 +10,13 @@ use crate::qbbn::{
     },
     explorer::{
         diagram_utils::{
-            diagram_implication, diagram_predicate, diagram_proposition, diagram_proposition_group,
+            diagram_proposition, diagram_proposition_group,
         },
         render_utils::render_app_body,
     },
     inference::{
         graph::PropositionGraph,
-        engine::{compute_each_combination, compute_factor_probability_table},
+        engine::compute_factor_probability_table,
         engine::Inferencer,
         table::{FactorProbabilityTable, PropositionNode, VariableAssignment},
     },
@@ -103,7 +103,7 @@ fn iterate_through_factors(
 }
 
 pub fn internal_factors(experiment_name: &str, resource_context: &ResourceContext) -> Html<String> {
-    let graph = InferenceGraph::new_mutable(experiment_name.to_string()).unwrap();
+    let _graph = InferenceGraph::new_mutable(experiment_name.to_string()).unwrap();
     let body_html = iterate_through_factors(experiment_name, resource_context).unwrap();
     let result = render_app_body(&body_html);
     Html(result.unwrap())

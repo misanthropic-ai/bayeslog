@@ -9,8 +9,8 @@ use crate::qbbn::{
         resources::ResourceContext,
     },
     explorer::{
-        diagram_utils::{diagram_predicate, diagram_proposition, diagram_proposition_factor},
-        render_utils::{render_against_custom_body, render_app_body},
+        diagram_utils::{diagram_proposition, diagram_proposition_factor},
+        render_utils::render_against_custom_body,
     },
     inference::{
         graph::PropositionGraph,

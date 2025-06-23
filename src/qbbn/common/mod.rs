@@ -9,6 +9,7 @@ pub mod resources;
 pub mod setup;
 pub mod test;
 pub mod train;
+pub mod batch_train;
 
 // Re-export key types
 pub use interface::BeliefTable;

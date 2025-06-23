@@ -2,7 +2,7 @@ use crate::qbbn::common::redis::MockConnection;
 use rocket::response::content::RawHtml as Html;
 
 use crate::qbbn::{
-    common::{graph::InferenceGraph, redis::seq_push, resources::ResourceContext},
+    common::{graph::InferenceGraph, resources::ResourceContext},
     explorer::{diagram_utils::diagram_implication, render_utils::render_app_body},
 };
 

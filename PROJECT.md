@@ -7,6 +7,14 @@ Below is a comprehensive design for the **BayesLog** project, a modern knowledge
 ## Project Overview
 **BayesLog** is an embeddable knowledge representation and reasoning system combining a graph database, a Quantified Boolean Bayesian Network (QBBN) for probabilistic reasoning, an ontology for type hierarchies, and advanced indexing for retrieval. Built in Rust for performance and stability, it uses SQLite as its backend and supports a dynamic REPL environment with a Scheme-based programming interface via the Steel Scheme interpreter. The system aims to unify symbolic AI's structure with probabilistic reasoning, addressing the limitations of projects like OpenCyc while integrating modern tools like LLMs and vector search.
 
+### Recent Achievements
+- **GPU Acceleration**: Implemented TorchExponentialModel with CUDA/MPS support, achieving 10-17% speedup on moderate datasets
+- **Model Compatibility**: Created unified weight format allowing seamless CPU/GPU model switching
+- **LLM-Friendly API**: Built BeliefMemory interface for easy integration with LLM agents
+- **Online Learning**: Implemented LoRA-inspired delta weights system for efficient single-gate updates
+- **Probabilistic AND Gates**: Replaced heuristic AND gates with learned probabilistic models using 6 specialized features
+- **Graph-Native Storage**: Refactored to use proper graph structures for all QBBN components
+
 ### Objectives
 - Provide a scalable graph database for storing entities, relationships, and documents.
 - Implement a QBBN-based belief network with incremental propagation, parallel inference, and decision theory capabilities.
@@ -350,7 +358,27 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Comprehensive explanation system with dual-approach methodology.
 - **Tests**: Explanation accuracy and counterfactual validation.
 
-### Milestone 7: Scheme Programming Interface
+### Milestone 7: Proper Graph-Based Representation ✅
+- **Tasks**:
+  - Refactor GraphDBAdapter to use proper graph structures: ✅
+    - Create dedicated "Proposition" nodes for each proposition
+    - Store evidence as properties on Proposition nodes
+    - Model entity relationships as edges in the graph
+    - Create explicit "Factor" nodes connected to premise/conclusion Propositions
+    - Replace hash-based storage with true graph relationships
+    - Update querying mechanisms to traverse the graph properly
+    - Add QBBN-specific operations that leverage graph semantics
+    - Create more efficient traversal patterns for common operations
+    - Fix compiler warnings and improve code quality
+  - Implement graph-specific optimizations: ✅
+    - Use graph traversal algorithms for belief propagation
+    - Leverage graph patterns for more efficient querying
+    - Use native graph database features for complex queries
+    - Ensure backward compatibility with existing code
+- **Deliverables**: True graph-native representation of belief network components.
+- **Tests**: Comprehensive tests for graph-based storage and retrieval.
+
+### Milestone 8: Scheme Programming Interface
 - **Tasks**:
   - Integrate Steel Scheme interpreter.
   - Implement custom primitives for belief operations.
@@ -361,7 +389,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Extensible Scheme programming environment.
 - **Tests**: Scheme script execution and primitive functionality.
 
-### Milestone 8: Advanced Search and Temporal Reasoning
+### Milestone 9: Advanced Search and Temporal Reasoning
 - **Tasks**:
   - Integrate `sqlite-vss` for vector indexing and similarity search.
   - Implement hybrid search combining logical and vector search.
@@ -372,7 +400,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Comprehensive search system with temporal capabilities.
 - **Tests**: Search accuracy, recall, and performance benchmarks.
 
-### Milestone 9: Ontology and Multi-level Abstraction
+### Milestone 10: Ontology and Multi-level Abstraction
 - **Tasks**:
   - Implement enhanced ontology system with multiple inheritance.
   - Add dynamic type learning from examples.
@@ -383,7 +411,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Hierarchical reasoning with dynamic abstractions.
 - **Tests**: Concept formation, abstraction reasoning, and type inference.
 
-### Milestone 10: LLM Integration and Learning
+### Milestone 11: LLM Integration and Learning
 - **Tasks**:
   - Implement `UnifiedClient` with `reqwest` for Claude/Ollama.
   - Add knowledge extraction for propositions and implications.
@@ -394,7 +422,7 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Automated knowledge extraction and learning.
 - **Tests**: Extraction accuracy and learning performance.
 
-### Milestone 11: Web Interface and Visualization
+### Milestone 12: Web Interface and Visualization
 - **Tasks**:
   - Create embedded web server for visualization.
   - Implement interactive belief network graph display.
@@ -405,7 +433,141 @@ We're revising our approach to implementing the QBBN. Rather than building a cus
 - **Deliverables**: Graphical interface for exploration and analysis.
 - **Tests**: Usability tests and visual correctness.
 
-### Milestone 12: Performance Optimization and Integration
+### Milestone 13: GPU-Accelerated ExponentialModel ✅
+- **Tasks**:
+  - Add PyTorch bindings (tch-rs) to Cargo.toml with CUDA/MPS support ✅
+  - Create TorchExponentialModel implementing FactorModel trait ✅
+  - Implement automatic device selection (MPS on macOS, CUDA on Linux/Windows, CPU fallback) ✅
+  - Convert weight storage to tensor-based operations ✅
+  - Implement modern optimizers (Adam, AdamW, SGD with momentum) ✅
+  - Add batch training support for efficient GPU utilization ✅
+  - Create learning rate scheduling and early stopping (partial - optimizer created, scheduling pending)
+  - Implement vectorized inference for batch predictions ✅
+  - Add configuration for optimizer selection and hyperparameters ✅
+  - Create benchmarks comparing CPU vs GPU performance ✅
+- **Deliverables**: GPU-accelerated training and inference with 10-17% speedup on moderate datasets (50-200 entities)
+- **Tests**: Performance benchmarks completed, showing:
+  - Standard model faster for small datasets (<10 entities) due to PyTorch overhead
+  - Break-even at ~10 entities
+  - GPU advantage emerges at 50+ entities: 10.5% faster at 50, 13.9% faster at 100, 17.3% faster at 200
+  - MPS device support confirmed on macOS
+- **Implementation Notes**:
+  - TorchExponentialModel successfully integrated with FactorModel trait
+  - Thread-safe implementation using Arc<Mutex<>> for optimizer and VarStore
+  - Automatic device selection prioritizes MPS on macOS, CUDA on Linux/Windows
+  - Tensor-based weight storage with dynamic resizing
+  - Adam optimizer with configurable hyperparameters
+  - Batch training infrastructure ready but currently processes examples individually
+  - Environment variable BAYESLOG_USE_TORCH controls model selection
+
+### Milestone 14: Model Compatibility and LLM-Friendly Interface ✅
+- **Tasks**:
+  - Implement weight export/import for ExponentialModel ✅
+  - Create ModelWeights common format with metadata ✅
+  - Add save/load methods to FactorModel trait ✅
+  - Create UnifiedExponentialModel for automatic CPU/GPU switching ✅
+  - Implement BeliefMemory high-level API for LLM integration ✅
+  - Add entity linking and graph integration ✅
+  - Create proposition management with prior beliefs ✅
+  - Implement belief updates from observations ✅
+  - Add entity-based belief queries ✅
+  - Set up automatic libtorch path configuration ✅
+- **Deliverables**: Seamless model compatibility and LLM-friendly interface
+- **Tests**: Created examples demonstrating:
+  - Model compatibility between CPU and GPU implementations
+  - BeliefMemory API for agent memory scenarios
+  - Automatic environment setup for easier development
+- **Implementation Notes**:
+  - ModelWeights format supports both ExponentialModel and TorchExponentialModel
+  - BeliefMemory provides high-level API for LLM agents
+  - Entities and propositions are stored in graph database with proper linking
+  - Quick belief updates without full training for interactive scenarios
+  - Cargo configuration automatically handles libtorch paths
+
+### Milestone 15: Enhanced GPU Optimization
+- **Tasks**:
+  - Implement true batch training in TorchExponentialModel (currently processes examples individually)
+  - Add learning rate scheduling (cosine annealing, step decay, exponential decay)
+  - Implement early stopping based on validation loss
+  - Add mixed precision training (FP16/BF16) for faster computation
+  - Create GPU memory optimization with gradient checkpointing
+  - Implement model parallelism for very large networks
+  - Add distributed training support for multi-GPU systems
+  - Create ONNX export for inference deployment
+  - Optimize batch size based on available GPU memory
+  - Add warmup steps for optimizer stability
+- **Deliverables**: 10-100x speedup for large-scale training scenarios
+- **Tests**: Large-scale benchmarks, memory usage profiling, multi-GPU scaling tests
+
+### Milestone 16: Delta Weights & Online Learning Infrastructure ✅
+- **Tasks**:
+  - Phase 1: Delta Weight Infrastructure ✅
+    - Create DeltaWeights structure for sparse weight updates ✅
+    - Implement WeightManager to combine base + delta weights ✅
+    - Add update tracking (counts, timestamps) per feature ✅
+    - Modify ExponentialModel to use WeightManager ✅
+  - Phase 2: Consolidation Logic ✅
+    - Implement multiple consolidation triggers (size, time, count, memory) ✅
+    - Create smart merging strategies for hot features ✅
+    - Add audit trail for consolidation history (partial - stats tracking done)
+    - Implement rollback capability for delta weights (deferred - not critical)
+  - Phase 3: Configuration & Persistence ✅
+    - Add configuration for consolidation thresholds ✅
+    - Implement save/load for delta weights ✅
+    - Create versioning system for compatibility (using ModelWeights versioning)
+    - Support partial weight loading by namespace (implicit via namespace filtering)
+- **Deliverables**: LoRA-inspired delta weight system for efficient online learning ✅
+- **Tests**: Unit tests for delta operations, consolidation benchmarks, memory usage profiling ✅
+- **Implementation Notes**:
+  - DeltaWeights tracks sparse updates with timestamps and counts
+  - WeightManager seamlessly combines base + delta weights
+  - Hot features are kept with decay during consolidation
+  - ExponentialModel now uses Arc<RwLock<WeightManager>> for thread safety
+  - Consolidation can be triggered manually or automatically based on thresholds
+
+### Milestone 17: Probabilistic AND Gate Implementation ✅
+- **Tasks**:
+  - Unified AND/OR gate handling in ExponentialModel ✅
+  - Designed and implemented AND gate features: ✅
+    - `and_size`: Number of premises in conjunction
+    - `and_num_true`: Count of true premises (> 0.5 threshold)
+    - `and_all_true`: Binary indicator for all premises true
+    - `and_any_false`: Binary indicator for any premise false
+    - `and_soft`: Product of all premise probabilities (soft AND)
+    - `and_min`: Minimum probability (weakest link)
+  - Implemented soft AND behavior with probabilistic reasoning ✅
+  - Created AND gate training scenario with diverse input patterns ✅
+  - Updated inference engine to use learned AND gates ✅
+  - Removed legacy heuristic AND gate code (1.0/0.0 returns) ✅
+  - Integrated with WeightManager for online updates ✅
+- **Deliverables**: Learned probabilistic AND gates using same mechanism as OR gates ✅
+- **Tests**: Comprehensive AND gate tests for hard and soft inputs ✅
+- **Documentation**: Created detailed AND_GATE_IMPLEMENTATION.md guide ✅
+- **Implementation Notes**:
+  - AND gates now use the same ExponentialModel as OR gates
+  - Feature extraction automatically detects conjunctions
+  - 6 specialized features capture AND gate semantics
+  - Training examples demonstrate various input combinations
+  - Probabilistic outputs enable nuanced reasoning beyond boolean logic
+
+### Milestone 18: Online Learning API & Integration
+- **Tasks**:
+  - Add targeted update methods to BeliefMemory:
+    - update_or_gate() for single OR gate updates
+    - update_and_gate() for single AND gate updates
+    - consolidate_weights() for manual consolidation
+  - Implement importance sampling for selective updates
+  - Add weight decay for unused implications
+  - Create monitoring and visualization tools:
+    - Weight change heatmaps
+    - Learning curves per gate
+    - Consolidation history dashboard
+  - Optimize for memory efficiency with configurable caching
+  - Add performance metrics and logging
+- **Deliverables**: Complete online learning system for continuous belief network updates
+- **Tests**: Online learning convergence tests, API integration tests, performance benchmarks
+
+### Milestone 19: Performance Optimization and Integration
 - **Tasks**:
   - Implement SIMD optimization for numeric operations.
   - Add optional GPU acceleration using WGPU.
@@ -459,10 +621,21 @@ After examining the reference implementation, we're adopting a transparent adapt
    - Property naming conventions for consistent data access
 
 3. **Storage Patterns**:
-   - Key-Value storage using KeyValue nodes
-   - Hash storage using Hash nodes with nested property objects
-   - Set storage using Set nodes connected to SetMember nodes
-   - List storage using List nodes connected to ordered ListItem nodes
+   - Proper graph representation of network components:
+     - Proposition nodes with belief values and evidence markers
+     - Factor nodes connected to premise and conclusion propositions
+     - Predicate nodes with connections to arguments
+     - Entity nodes with connections to domains
+   - Specialized QBBN operations that leverage graph structure:
+     - store_proposition - Creates a full proposition with all related nodes
+     - create_factor - Creates a factor with premises and conclusion
+     - set_evidence - Sets evidence on proposition nodes
+     - update_belief - Updates pi/lambda/belief values on nodes
+   - Legacy compatibility through Redis-like primitives:
+     - Key-Value storage using KeyValue nodes
+     - Hash storage using proper node types based on semantic meaning
+     - Set storage using specialized edge connections
+     - List storage using ordered edges with position properties
 
 4. **Training Support**:
    - Weight storage in the graph database
@@ -568,6 +741,9 @@ These enhancements will build on the solid foundation of the adapted reference i
   - Generate API docs with `cargo doc` and include comprehensive examples.
   - Create interactive tutorials for the Scheme interface.
   - Provide visualization tools for understanding the system architecture.
+  - **Specialized Guides**:
+    - `docs/AND_GATE_IMPLEMENTATION.md`: Comprehensive guide for probabilistic AND gates
+    - Additional guides to be created for other major features
 - **Testing and Verification**:
   - Implement property-based testing for belief propagation.
   - Add fuzzing for robustness against unexpected inputs.
